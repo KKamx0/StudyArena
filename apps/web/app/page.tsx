@@ -1,65 +1,81 @@
-import Image from "next/image";
+// This is the homepage for StudyArena.
+// In Next.js, this file controls the "/" route.
+// That means when you visit http://localhost:3000,
+// this component is what appears on the screen.
 
 export default function Home() {
+  // The return statement contains the UI for this page.
+  // React uses JSX/TSX, which looks like HTML inside JavaScript/TypeScript.
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    // <main> is the main wrapper for the whole page.
+    // className uses Tailwind CSS classes for styling.
+    // min-h-screen = full screen height
+    // bg-slate-950 = dark background
+    // text-white = white text
+    <main
+        className="min-h-screen bg-cover bg-center bg-no-repeat text-white"
+        style={{
+      backgroundImage: "url('/images/study-arena-bg.png')",
+      backgroundPosition: "center 65%",
+    }}
+    >
+  <section className="flex min-h-screen flex-col items-center justify-center bg-slate-950/25 px-6 text-center">
+        {/* Small badge above the title */}
+        <p className="mb-4 rounded-full border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-cyan-300">
+          Welcome to the arena
+        </p>
+
+        {/* Main app title */}
+        <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-7xl">
+          StudyArena
+        </h1>
+
+        {/* Short pitch for the app/game */}
+        <p className="mt-6 max-w-2xl text-lg text-slate-300 md:text-xl">
+          An avatar-based open world where students battle, rank up, earn coins,
+          and unlock rewards by mastering real subjects.
+        </p>
+
+        {/* Button group */}
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+          {/* Later this button will take users into the open world/plaza */}
+          <button className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300">
+            Enter the Plaza
+          </button>
+
+          {/* Later this button can scroll to or open game modes */}
+          <button className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300">
+            View Game Modes
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Feature cards */}
+        <div className="mt-16 grid w-full max-w-5xl gap-6 md:grid-cols-3">
+          {/* Feature card 1 */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="text-xl font-bold">Open World</h2>
+            <p className="mt-3 text-slate-400">
+              Walk around the plaza, meet players, and enter subject arenas.
+            </p>
+          </div>
+
+          {/* Feature card 2 */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="text-xl font-bold">Ranked Battles</h2>
+            <p className="mt-3 text-slate-400">
+              Compete solo, with friends, or against random players.
+            </p>
+          </div>
+
+          {/* Feature card 3 */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="text-xl font-bold">Earn Rewards</h2>
+            <p className="mt-3 text-slate-400">
+              Gain XP, coins, clothes, badges, titles, and subject-based ranks.
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }

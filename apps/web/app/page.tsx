@@ -12,9 +12,7 @@ export default function Home() {
         backgroundPosition: "center 65%",
       }}
     >
-      {/* Dark overlay so the text is readable over the background image */}
       <section className="flex min-h-screen flex-col items-center justify-center bg-slate-950/25 px-6 text-center">
-        {/* Main app title */}
         <h1
           className="max-w-4xl text-6xl font-extrabold tracking-tight text-white md:text-8xl"
           style={{
@@ -24,7 +22,6 @@ export default function Home() {
           StudyArena
         </h1>
 
-        {/* Short pitch for the app/game */}
         <p
           className="mt-6 max-w-2xl text-lg font-semibold leading-relaxed text-white md:text-xl"
           style={{
@@ -35,7 +32,6 @@ export default function Home() {
           and unlock rewards by mastering real subjects.
         </p>
 
-        {/* Button group */}
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
             href="/world"
@@ -49,7 +45,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Feature cards */}
         <div className="mt-16 grid w-full max-w-5xl gap-6 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur">
             <h2 className="text-xl font-bold">Open World</h2>

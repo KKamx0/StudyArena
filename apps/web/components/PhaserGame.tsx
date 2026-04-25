@@ -1,13 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// This component loads the Phaser game canvas.
-// Right now, we are building the first playable StudyArena plaza.
+// PhaserGame loads the Phaser canvas and manages the game world.
+// We use useState to pass information from Phaser back to React
+// so we can show HTML overlays like popups on top of the game.
 
 export default function PhaserGame() {
-  // This ref points to the HTML div where Phaser will place the canvas.
   const gameContainer = useRef<HTMLDivElement | null>(null);
+
+  // nearBuilding tracks which building the player is close to.
+  // null means player is not near anything.
+  const [nearBuilding, setNearBuilding] = useState<string | null>(null);
+
+  // activeBuilding is set when the player presses E.
+  // This opens the popup for that building.
+  const [activeBuilding, setActiveBuilding] = useState<string | null>(null);
+
+  // We use a ref to share nearBuilding with Phaser's update loop.
+  // Phaser runs outside React so it can't read useState directly.
+  const nearBuildingRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!gameContainer.current) return;
@@ -26,21 +38,29 @@ export default function PhaserGame() {
           S: Phaser.Input.Keyboard.Key;
           D: Phaser.Input.Keyboard.Key;
         };
+        private eKey!: Phaser.Input.Keyboard.Key;
 
         private worldWidth = 1600;
         private worldHeight = 1000;
-        private speed = 7;
+        private speed = 5;
+
+        // Each building has a position and a trigger radius.
+        // When the player gets within that radius, the prompt appears.
+        private buildings = [
+          { name: "Arenas",     x: 430,  y: 250, radius: 130 },
+          { name: "Shop",       x: 1170, y: 250, radius: 130 },
+          { name: "Study Hall", x: 430,  y: 760, radius: 130 },
+          { name: "Profile",    x: 1170, y: 760, radius: 130 },
+        ];
 
         constructor() {
           super("PlazaScene");
         }
 
         create() {
-          // Set the size of the full playable world.
-          // The world is bigger than the screen, so the camera can follow the player.
           this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
 
-          // Main ground/background.
+          // Main ground
           this.add.rectangle(
             this.worldWidth / 2,
             this.worldHeight / 2,
@@ -49,23 +69,20 @@ export default function PhaserGame() {
             0x0f172a
           );
 
-          // Main plaza floor.
+          // Plaza floor
           this.add
             .rectangle(800, 500, 1200, 700, 0x1e293b)
             .setStrokeStyle(5, 0x334155);
 
-          // Horizontal walkway.
+          // Walkways
           this.add.rectangle(800, 500, 1300, 120, 0x334155);
-
-          // Vertical walkway.
           this.add.rectangle(800, 500, 120, 800, 0x334155);
 
-          // Center plaza circle.
+          // Center circle
           this.add
             .circle(800, 500, 120, 0x0e7490)
             .setStrokeStyle(5, 0x67e8f9);
 
-          // Center label.
           this.add
             .text(800, 500, "PLAZA", {
               fontSize: "28px",
@@ -75,30 +92,27 @@ export default function PhaserGame() {
             })
             .setOrigin(0.5);
 
-          // Buildings/locations.
-          this.createBuilding(430, 250, 260, 160, 0x7c3aed, "ARENAS");
+          // Draw all buildings
+          this.createBuilding(430,  250, 260, 160, 0x7c3aed, "ARENAS");
           this.createBuilding(1170, 250, 260, 160, 0xf97316, "SHOP");
-          this.createBuilding(430, 760, 260, 160, 0x22c55e, "STUDY HALL");
+          this.createBuilding(430,  760, 260, 160, 0x22c55e, "STUDY HALL");
           this.createBuilding(1170, 760, 260, 160, 0x0ea5e9, "PROFILE");
 
-          // Add small signs near each building.
-          this.createSign(430, 370, "Battle friends or randoms");
+          // Signs under buildings
+          this.createSign(430,  370, "Battle friends or randoms");
           this.createSign(1170, 370, "Buy clothes and rewards");
-          this.createSign(430, 880, "Solo challenges");
+          this.createSign(430,  880, "Solo challenges");
           this.createSign(1170, 880, "Stats, rank, and avatar");
 
-          // Temporary player avatar.
-          // Later, this will become a real character sprite.
+          // Player avatar
           this.player = this.add.circle(800, 620, 24, 0x22d3ee);
           this.player.setStrokeStyle(4, 0xffffff);
 
-          // Camera follows the player.
+          // Camera follows player
           this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
-          // Arrow key controls.
+          // Controls
           this.cursors = this.input.keyboard!.createCursorKeys();
-
-          // WASD controls.
           this.wasdKeys = this.input.keyboard!.addKeys({
             W: Phaser.Input.Keyboard.KeyCodes.W,
             A: Phaser.Input.Keyboard.KeyCodes.A,
@@ -110,27 +124,24 @@ export default function PhaserGame() {
             S: Phaser.Input.Keyboard.Key;
             D: Phaser.Input.Keyboard.Key;
           };
+
+          // E key for entering buildings
+          this.eKey = this.input.keyboard!.addKey(
+            Phaser.Input.Keyboard.KeyCodes.E
+          );
         }
 
         update() {
+          // Movement
           let moveX = 0;
           let moveY = 0;
 
-          // Left/right movement.
-          if (this.cursors.left?.isDown || this.wasdKeys.A.isDown) {
-            moveX = -1;
-          } else if (this.cursors.right?.isDown || this.wasdKeys.D.isDown) {
-            moveX = 1;
-          }
+          if (this.cursors.left?.isDown || this.wasdKeys.A.isDown) moveX = -1;
+          else if (this.cursors.right?.isDown || this.wasdKeys.D.isDown) moveX = 1;
 
-          // Up/down movement.
-          if (this.cursors.up?.isDown || this.wasdKeys.W.isDown) {
-            moveY = -1;
-          } else if (this.cursors.down?.isDown || this.wasdKeys.S.isDown) {
-            moveY = 1;
-          }
+          if (this.cursors.up?.isDown || this.wasdKeys.W.isDown) moveY = -1;
+          else if (this.cursors.down?.isDown || this.wasdKeys.S.isDown) moveY = 1;
 
-          // Normalize diagonal movement so diagonal speed is not faster.
           if (moveX !== 0 && moveY !== 0) {
             moveX *= 0.707;
             moveY *= 0.707;
@@ -139,19 +150,44 @@ export default function PhaserGame() {
           const newX = this.player.x + moveX * this.speed;
           const newY = this.player.y + moveY * this.speed;
 
-          // Keep player inside the world bounds.
           this.player.x = Phaser.Math.Clamp(newX, 30, this.worldWidth - 30);
           this.player.y = Phaser.Math.Clamp(newY, 30, this.worldHeight - 30);
+
+          // Check proximity to each building every frame.
+          // Phaser.Math.Distance.Between calculates straight-line distance.
+          let closest: string | null = null;
+
+          for (const building of this.buildings) {
+            const dist = Phaser.Math.Distance.Between(
+              this.player.x, this.player.y,
+              building.x, building.y
+            );
+            if (dist < building.radius) {
+              closest = building.name;
+              break;
+            }
+          }
+
+          // Only call setNearBuilding when the value actually changes.
+          // Calling it every frame would cause too many React re-renders.
+          if (closest !== nearBuildingRef.current) {
+            nearBuildingRef.current = closest;
+            setNearBuilding(closest);
+          }
+
+          // If player is near a building and presses E, open the popup.
+          if (
+            Phaser.Input.Keyboard.JustDown(this.eKey) &&
+            nearBuildingRef.current !== null
+          ) {
+            setActiveBuilding(nearBuildingRef.current);
+          }
         }
 
-        // Helper function for drawing buildings.
         createBuilding(
-          x: number,
-          y: number,
-          width: number,
-          height: number,
-          color: number,
-          label: string
+          x: number, y: number,
+          width: number, height: number,
+          color: number, label: string
         ) {
           this.add
             .rectangle(x, y, width, height, color)
@@ -166,13 +202,11 @@ export default function PhaserGame() {
             })
             .setOrigin(0.5);
 
-          // Door.
           this.add
             .rectangle(x, y + height / 2 - 20, 80, 40, 0x020617)
             .setStrokeStyle(3, 0x67e8f9);
         }
 
-        // Helper function for small signs under buildings.
         createSign(x: number, y: number, label: string) {
           this.add
             .rectangle(x, y, 260, 38, 0x020617, 0.85)
@@ -188,33 +222,81 @@ export default function PhaserGame() {
         }
       }
 
-      game = new Phaser.Game({
-        type: Phaser.AUTO,
-        parent: gameContainer.current!,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        backgroundColor: "#0f172a",
-        scene: PlazaScene,
-        scale: {
-          mode: Phaser.Scale.RESIZE,
-          autoCenter: Phaser.Scale.CENTER_BOTH,
-        },
-      });
+    game = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: gameContainer.current!,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      backgroundColor: "#0f172a",
+      scene: PlazaScene,
+      audio: {
+        noAudio: true,
+      },
+      scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+      },
+    });
     }
 
     startGame();
 
     return () => {
-      if (game) {
-        game.destroy(true);
-      }
+      if (game) game.destroy(true);
     };
   }, []);
 
   return (
-    <div
-      ref={gameContainer}
-      className="absolute inset-0 z-0 h-screen w-screen overflow-hidden"
-    />
+    <>
+      {/* Phaser canvas */}
+      <div
+        ref={gameContainer}
+        className="absolute inset-0 z-0 h-screen w-screen overflow-hidden"
+      />
+
+      {/* "Press E" prompt — shows when player is near a building */}
+      {nearBuilding && !activeBuilding && (
+        <div className="absolute bottom-28 left-1/2 z-30 -translate-x-1/2 rounded-xl border border-cyan-400/50 bg-slate-900/90 px-6 py-3 text-center backdrop-blur">
+          <p className="text-sm font-semibold text-cyan-300">
+            Press <span className="rounded bg-slate-700 px-2 py-0.5 font-bold text-white">E</span> to enter {nearBuilding}
+          </p>
+        </div>
+      )}
+
+      {/* Building popup modal */}
+      {activeBuilding && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-8 shadow-2xl">
+            <h2 className="text-2xl font-extrabold text-white">
+              {activeBuilding}
+            </h2>
+            <p className="mt-3 text-slate-300">
+              {activeBuilding === "Arenas" &&
+                "Choose a subject and battle solo, with friends, or against randoms. Earn XP and coins for every win."}
+              {activeBuilding === "Shop" &&
+                "Spend your coins on clothes, accessories, and cosmetics. Show off your style in the plaza."}
+              {activeBuilding === "Study Hall" &&
+                "Solo challenges and focus sessions. Grind XP and complete daily quests here."}
+              {activeBuilding === "Profile" &&
+                "View your stats, rank, subject progress, and equipped avatar items."}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setActiveBuilding(null)}
+                className="rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => setActiveBuilding(null)}
+                className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 hover:bg-cyan-300"
+              >
+                Enter {activeBuilding}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,14 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import PhaserGame from "@/components/PhaserGame";
+import { createInitialPlayerProgress } from "@/lib/progression";
 
 // This file creates the /world page.
 // This is where the playable StudyArena world loads.
 
 export default function WorldPage() {
+  const [playerProgress, setPlayerProgress] = useState(() =>
+    createInitialPlayerProgress()
+  );
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
       {/* Phaser game canvas */}
-      <PhaserGame />
+      <PhaserGame
+        playerProgress={playerProgress}
+        onPlayerProgressChange={setPlayerProgress}
+      />
 
       {/* Top HUD */}
       <header className="absolute left-0 top-0 z-20 flex w-full items-center justify-between px-6 py-4">
@@ -23,11 +34,15 @@ export default function WorldPage() {
 
         <div className="flex items-center gap-3">
           <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
-            Coins: 0
+            Coins: {playerProgress.coins}
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
-            Level 1
+            XP: {playerProgress.totalXp}
+          </div>
+
+          <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
+            Level {playerProgress.level}
           </div>
 
           <Link

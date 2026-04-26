@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-// This is the homepage for StudyArena.
-// In Next.js, this file controls the "/" route.
+// This is the public auth entry page for StudyArena.
 
 export default function Home() {
   return (
@@ -23,49 +22,28 @@ export default function Home() {
         </h1>
 
         <p
-          className="mt-6 max-w-2xl text-lg font-semibold leading-relaxed text-white md:text-xl"
+          className="mt-6 max-w-xl text-lg font-semibold leading-relaxed text-white md:text-xl"
           style={{
             textShadow: "0 3px 16px rgba(0, 0, 0, 0.95)",
           }}
         >
-          An avatar-based open world where students battle, rank up, earn coins,
-          and unlock rewards by mastering real subjects.
+          Log in or create an account to enter your study world.
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
           <Link
-            href="/world"
-            className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 shadow-lg hover:bg-cyan-300"
+            href="/login"
+            className="rounded-xl bg-cyan-400 px-8 py-3 font-bold text-slate-950 shadow-lg hover:bg-cyan-300"
           >
-            Enter the Plaza
+            Login
           </Link>
 
-          <button className="rounded-xl bg-cyan-400 px-6 py-3 font-semibold text-slate-950 shadow-lg hover:bg-cyan-300">
-            View Game Modes
-          </button>
-        </div>
-
-        <div className="mt-16 grid w-full max-w-5xl gap-6 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur">
-            <h2 className="text-xl font-bold">Open World</h2>
-            <p className="mt-3 text-slate-300">
-              Walk around the plaza, meet players, and enter subject arenas.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur">
-            <h2 className="text-xl font-bold">Ranked Battles</h2>
-            <p className="mt-3 text-slate-300">
-              Compete solo, with friends, or against random players.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-2xl backdrop-blur">
-            <h2 className="text-xl font-bold">Earn Rewards</h2>
-            <p className="mt-3 text-slate-300">
-              Gain XP, coins, clothes, badges, titles, and subject-based ranks.
-            </p>
-          </div>
+          <Link
+            href="/signup"
+            className="rounded-xl border border-purple-300 bg-purple-500/90 px-8 py-3 font-bold text-white shadow-lg hover:bg-purple-400"
+          >
+            Sign Up
+          </Link>
         </div>
       </section>
     </main>

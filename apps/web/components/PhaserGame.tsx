@@ -2,70 +2,49 @@
 
 import type * as PhaserTypes from "phaser";
 import { useEffect, useRef, useState } from "react";
+import {
+  gameModes,
+  questions,
+  subjects,
+  type ChallengeReward,
+  type GameMode,
+  type PlayerProgress,
+  type Subject,
+} from "@/data";
+import {
+  applyChallengeReward,
+  calculateChallengeReward,
+  getQuestionsForSubject,
+} from "@/lib/progression";
 
 type BuildingName = "Arenas" | "Shop" | "Study Hall" | "Profile";
 
-const arenaSubjects = [
-  {
-    id: "math",
-    name: "Math",
-    description: "Timed problem-solving and math XP.",
-  },
-  {
-    id: "coding",
-    name: "Coding",
-    description: "Debugging, logic, and programming drills.",
-  },
-  {
-    id: "cybersecurity",
-    name: "Cybersecurity",
-    description: "Ports, threats, defense, and Security+ practice.",
-  },
-  {
-    id: "science",
-    name: "Science",
-    description: "Biology, chemistry, and physics challenges.",
-  },
-  {
-    id: "history",
-    name: "History",
-    description: "History and civics questions.",
-  },
-];
+type PhaserGameProps = {
+  playerProgress: PlayerProgress;
+  onPlayerProgressChange: (progress: PlayerProgress) => void;
+};
 
-const arenaModes = [
-  {
-    id: "solo",
-    name: "Solo Challenge",
-    description: "Practice alone and earn XP.",
-  },
-  {
-    id: "friends",
-    name: "Battle Friends",
-    description: "Invite friends to a private match.",
-  },
-  {
-    id: "random",
-    name: "Random Match",
-    description: "Queue against a random player.",
-  },
-  {
-    id: "ranked",
-    name: "Ranked",
-    description: "Compete for rank points.",
-  },
-];
+type RewardResult = ChallengeReward & {
+  subjectId: string;
+  subjectName: string;
+  previousLevel: number;
+  newLevel: number;
+  leveledUp: boolean;
+};
 
-export default function PhaserGame() {
+export default function PhaserGame({
+  playerProgress,
+  onPlayerProgressChange,
+}: PhaserGameProps) {
   const gameContainer = useRef<HTMLDivElement | null>(null);
 
   const [nearBuilding, setNearBuilding] = useState<BuildingName | null>(null);
   const [activeBuilding, setActiveBuilding] = useState<BuildingName | null>(
     null
   );
-
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [lastReward, setLastReward] = useState<RewardResult | null>(null);
 
   const nearBuildingRef = useRef<BuildingName | null>(null);
 
@@ -73,6 +52,7 @@ export default function PhaserGame() {
     setActiveBuilding(null);
     setSelectedSubject(null);
     setSelectedMode(null);
+    setLastReward(null);
   }
 
   useEffect(() => {
@@ -316,11 +296,60 @@ export default function PhaserGame() {
     return "";
   }
 
-  const selectedSubjectData = arenaSubjects.find(
+  function handlePrototypeSoloChallenge(subject: Subject, mode: GameMode) {
+    if (mode.id !== "solo-challenge") {
+      return;
+    }
+
+    const challengeQuestions = getQuestionsForSubject(questions, subject.id, 3);
+
+    if (challengeQuestions.length === 0) {
+      return;
+    }
+
+    // This lets us test the reward system before the full quiz flow is built.
+    const answerResults = challengeQuestions.map((question) => ({
+      difficulty: question.difficulty,
+      isCorrect: true,
+    }));
+
+    const reward = calculateChallengeReward(answerResults);
+    const updatedProgress = applyChallengeReward(
+      playerProgress,
+      subject.id,
+      reward
+    );
+
+    onPlayerProgressChange(updatedProgress);
+
+    setLastReward({
+      ...reward,
+      subjectId: subject.id,
+      subjectName: subject.name,
+      previousLevel: playerProgress.level,
+      newLevel: updatedProgress.level,
+      leveledUp: updatedProgress.level > playerProgress.level,
+    });
+  }
+
+  const selectedSubjectData = subjects.find(
     (subject) => subject.id === selectedSubject
   );
+  const selectedModeData = gameModes.find((mode) => mode.id === selectedMode);
 
-  const selectedModeData = arenaModes.find((mode) => mode.id === selectedMode);
+  const previewQuestions = selectedSubject
+    ? getQuestionsForSubject(questions, selectedSubject, 3)
+    : [];
+
+  const rewardPreview =
+    selectedModeData?.id === "solo-challenge" && previewQuestions.length > 0
+      ? calculateChallengeReward(
+          previewQuestions.map((question) => ({
+            difficulty: question.difficulty,
+            isCorrect: true,
+          }))
+        )
+      : null;
 
   return (
     <>
@@ -349,7 +378,7 @@ export default function PhaserGame() {
               aria-label="Close popup"
               className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-red-500 text-xl font-black text-white shadow-lg hover:bg-red-400"
             >
-              ×
+              X
             </button>
 
             <div className="mb-4 pr-14">
@@ -381,12 +410,13 @@ export default function PhaserGame() {
                   </div>
 
                   <div className="grid gap-2">
-                    {arenaSubjects.map((subject) => (
+                    {subjects.map((subject) => (
                       <button
                         key={subject.id}
                         onClick={() => {
                           setSelectedSubject(subject.id);
                           setSelectedMode(null);
+                          setLastReward(null);
                         }}
                         className={`rounded-xl border px-3 py-2.5 text-left shadow-lg transition ${
                           selectedSubject === subject.id
@@ -426,11 +456,14 @@ export default function PhaserGame() {
                   )}
 
                   <div className="grid gap-2">
-                    {arenaModes.map((mode) => (
+                    {gameModes.map((mode) => (
                       <button
                         key={mode.id}
                         disabled={!selectedSubject}
-                        onClick={() => setSelectedMode(mode.id)}
+                        onClick={() => {
+                          setSelectedMode(mode.id);
+                          setLastReward(null);
+                        }}
                         className={`rounded-xl border px-3 py-2.5 text-left shadow-lg transition ${
                           selectedMode === mode.id
                             ? "border-cyan-300 bg-cyan-400 text-slate-950"
@@ -496,23 +529,155 @@ export default function PhaserGame() {
                         .
                       </p>
 
-                      <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-                          Rewards Preview
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-white">
-                          XP + Coins after completion
-                        </p>
-                      </div>
+                      {selectedModeData.id === "solo-challenge" &&
+                        previewQuestions.length > 0 &&
+                        rewardPreview && (
+                          <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                              Rewards Preview
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-white">
+                              Prototype run pays {rewardPreview.xpEarned} XP and{" "}
+                              {rewardPreview.coinsEarned} coins.
+                            </p>
+                            <p className="mt-1 text-xs text-slate-300">
+                              Uses the first {previewQuestions.length} starter
+                              questions for {selectedSubjectData.name}.
+                            </p>
+                          </div>
+                        )}
+
+                      {selectedModeData.id === "solo-challenge" &&
+                        previewQuestions.length === 0 && (
+                          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-950/30 px-3 py-3">
+                            <p className="text-sm font-semibold text-amber-200">
+                              Starter questions for {selectedSubjectData.name} are
+                              coming soon.
+                            </p>
+                            <p className="mt-1 text-xs text-amber-100/80">
+                              XP and coins are wired up, but this subject needs
+                              quiz content before it can award them.
+                            </p>
+                          </div>
+                        )}
+
+                      {selectedModeData.id !== "solo-challenge" && (
+                        <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                          <p className="text-sm font-semibold text-white">
+                            Solo Challenge is the first rewards-enabled mode.
+                          </p>
+                          <p className="mt-1 text-xs text-slate-300">
+                            Friend battles, random matches, and ranked can reuse
+                            the same XP and coin helpers later.
+                          </p>
+                        </div>
+                      )}
+
+                      {lastReward &&
+                        lastReward.subjectId === selectedSubjectData.id && (
+                          <div className="mt-4 rounded-xl border border-cyan-400/40 bg-cyan-950/20 px-3 py-3">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                              Last Reward
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-white">
+                              {lastReward.subjectName} practice run complete: +
+                              {lastReward.xpEarned} XP and +
+                              {lastReward.coinsEarned} coins.
+                            </p>
+                            <p className="mt-1 text-xs text-slate-300">
+                              Correct answers: {lastReward.correctAnswers}/
+                              {lastReward.totalQuestions}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-300">
+                              Subject XP earned: +{lastReward.subjectXpEarned}
+                            </p>
+                            {lastReward.leveledUp && (
+                              <p className="mt-1 text-xs font-semibold text-cyan-200">
+                                Level up: {lastReward.previousLevel} to{" "}
+                                {lastReward.newLevel}
+                              </p>
+                            )}
+                          </div>
+                        )}
 
                       <button
-                        onClick={() => alert("Challenge system coming next.")}
-                        className="mt-4 w-full rounded-xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300"
+                        onClick={() =>
+                          handlePrototypeSoloChallenge(
+                            selectedSubjectData,
+                            selectedModeData
+                          )
+                        }
+                        disabled={
+                          selectedModeData.id !== "solo-challenge" ||
+                          previewQuestions.length === 0
+                        }
+                        className={`mt-4 w-full rounded-xl px-5 py-3 text-sm font-bold shadow-lg transition ${
+                          selectedModeData.id === "solo-challenge" &&
+                          previewQuestions.length > 0
+                            ? "bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                            : "cursor-not-allowed bg-slate-700 text-slate-300"
+                        }`}
                       >
-                        Start Challenge
+                        Complete Prototype Solo Run
                       </button>
                     </>
                   )}
+                </section>
+              </div>
+            ) : activeBuilding === "Profile" ? (
+              <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+                <section className="rounded-2xl border border-cyan-400/30 bg-slate-950/70 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
+                    Account Progress
+                  </p>
+                  <h3 className="mt-1 text-2xl font-black text-white">
+                    Level {playerProgress.level}
+                  </h3>
+
+                  <div className="mt-4 grid gap-3">
+                    <div className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        Coins
+                      </p>
+                      <p className="mt-1 text-lg font-bold text-white">
+                        {playerProgress.coins}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                        Total XP
+                      </p>
+                      <p className="mt-1 text-lg font-bold text-white">
+                        {playerProgress.totalXp}
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="rounded-2xl border border-slate-700 bg-slate-950/60 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
+                    Subject Progress
+                  </p>
+                  <h3 className="mt-1 text-lg font-black text-white">
+                    XP By Subject
+                  </h3>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {subjects.map((subject) => (
+                      <div
+                        key={subject.id}
+                        className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-3"
+                      >
+                        <p className="text-sm font-bold text-white">
+                          {subject.icon} {subject.name}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-300">
+                          {subject.xpName}: {playerProgress.subjectXp[subject.id] ?? 0}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               </div>
             ) : (

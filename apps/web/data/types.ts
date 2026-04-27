@@ -39,3 +39,30 @@ export type QuizQuestion = {
   explanation: string;
   difficulty: "easy" | "medium" | "hard";
 };
+
+/**
+ * We keep subject XP separate so later reward systems can unlock by subject.
+ */
+export type SubjectXpMap = Record<string, number>;
+
+export type PlayerProgress = {
+  coins: number;
+  totalXp: number;
+  level: number;
+  subjectXp: SubjectXpMap;
+};
+
+export type ChallengeAnswerResult = {
+  difficulty: QuizQuestion["difficulty"];
+  isCorrect: boolean;
+};
+
+export type ChallengeReward = {
+  coinsEarned: number;
+  xpEarned: number;
+  subjectXpEarned: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  completionBonusXp: number;
+  completionBonusCoins: number;
+};

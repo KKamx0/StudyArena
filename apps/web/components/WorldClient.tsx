@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import PhaserGame from "@/components/PhaserGame";
+import { createInitialPlayerProgress } from "@/lib/progression";
 
 export default function WorldClient() {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
+
+  // This keeps XP/coins/level in client state while the player is in the world.
+  // Later, we can save this progress to Supabase so it persists permanently.
+  const [playerProgress, setPlayerProgress] = useState(() =>
+    createInitialPlayerProgress()
+  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -36,7 +43,10 @@ export default function WorldClient() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <PhaserGame />
+      <PhaserGame
+        playerProgress={playerProgress}
+        onPlayerProgressChange={setPlayerProgress}
+      />
 
       <header className="absolute left-0 top-0 z-20 flex w-full flex-wrap items-start justify-between gap-3 px-6 py-4">
         <div className="rounded-2xl border border-slate-700 bg-slate-900/85 px-5 py-3 shadow-2xl backdrop-blur">
@@ -53,22 +63,22 @@ export default function WorldClient() {
 
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
-            Coins: {profile?.coins ?? 0}
+            Coins: {playerProgress.coins}
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
-            Level {profile?.level ?? 1}
+            XP: {playerProgress.totalXp}
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm font-semibold text-white shadow-xl backdrop-blur">
-            XP: {profile?.xp ?? 0}
+            Level {playerProgress.level}
           </div>
 
           <Link
-            href="/"
+            href="/dashboard"
             className="rounded-xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg hover:bg-cyan-300"
           >
-            Exit
+            Dashboard
           </Link>
 
           <button

@@ -35,7 +35,6 @@ export default function WorldClient() {
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-cyan-300">
             StudyArena
           </p>
-
           <h1 className="mt-2 text-2xl font-black">Loading the Plaza...</h1>
         </div>
       </main>
@@ -54,11 +53,9 @@ export default function WorldClient() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
             StudyArena
           </p>
-
           <h1 className="text-2xl font-extrabold tracking-tight text-white">
             The Plaza
           </h1>
-
           <p className="mt-1 text-sm font-semibold text-slate-300">
             {profile?.username ?? "Player"}
           </p>

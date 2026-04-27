@@ -1,5 +1,6 @@
 "use client";
 
+import type * as PhaserTypes from "phaser";
 import { useEffect, useRef, useState } from "react";
 import {
   gameModes,
@@ -57,17 +58,20 @@ export default function PhaserGame({
   useEffect(() => {
     if (!gameContainer.current) return;
 
-    let game: any = null;
+    let game: PhaserTypes.Game | null = null;
     let destroyed = false;
 
     async function startGame() {
       const Phaser = await import("phaser");
 
       class PlazaScene extends Phaser.Scene {
-        private player!: any;
-        private cursors!: any;
-        private wasdKeys!: any;
-        private eKey!: any;
+        private player!: PhaserTypes.GameObjects.Arc;
+        private cursors!: PhaserTypes.Types.Input.Keyboard.CursorKeys;
+        private wasdKeys!: Record<
+          "W" | "A" | "S" | "D",
+          PhaserTypes.Input.Keyboard.Key
+        >;
+        private eKey!: PhaserTypes.Input.Keyboard.Key;
 
         private worldWidth = 1600;
         private worldHeight = 1000;
@@ -142,7 +146,7 @@ export default function PhaserGame({
             A: Phaser.Input.Keyboard.KeyCodes.A,
             S: Phaser.Input.Keyboard.KeyCodes.S,
             D: Phaser.Input.Keyboard.KeyCodes.D,
-          });
+          }) as Record<"W" | "A" | "S" | "D", PhaserTypes.Input.Keyboard.Key>;
 
           this.eKey = this.input.keyboard!.addKey(
             Phaser.Input.Keyboard.KeyCodes.E
